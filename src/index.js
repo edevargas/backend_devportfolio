@@ -21,7 +21,18 @@ app.get('/api/projects', (request, response) => {
 app.get('/api/projects/:id', (request, response) => {
     const { id } = request.params
     const project = projects.find(p => p._id === id)
-    response.json(project)
+    project ?  response.json(project) : response.status(404).end() 
+})
+
+app.delete('/api/projects/:id', (request, response) => {
+    const { id } = request.params
+    const idx = projects.findIndex(p => p._id === id)
+    if(idx >= 0) {
+        projects.splice(idx, 1)
+        response.json(projects)
+    } else {
+        response.status(404).end() 
+    }
 })
 
 const PORT = 3001
