@@ -1,14 +1,7 @@
 const express = require('express')
 const app = express()
-
+app.use(express.json())
 const { projects } = require('./data')
-
-/**
-const app = http.createServer((request, response) => {
-    response.writeHead(200, { 'Content-Type': 'application/json'})
-    response.end(JSON.stringify(projects))
-})
- */
 
 app.get('/', (request, response) => {
     response.send('<h1>Hi from dev Portfolio v1.0.0</h1>')
@@ -24,12 +17,30 @@ app.get('/api/projects/:id', (request, response) => {
     project ?  response.json(project) : response.status(404).end() 
 })
 
+app.post('/api/projects', (request, response) => {
+    const project = request.body
+    if(!project || !project.name) {
+        return response.status(400).json({
+            error: 'Is not a valid project'
+        })
+    }
+    const randomId = Math.random().toString(36)
+    const newProject = {
+        ...project,
+        _id: randomId,
+        creationDate: new Date().toISOString()
+    }
+    const lastIndex = projects.length
+    projects.splice(lastIndex + 1, 0, newProject)
+    response.json(newProject)
+})
+
 app.delete('/api/projects/:id', (request, response) => {
     const { id } = request.params
     const idx = projects.findIndex(p => p._id === id)
     if(idx >= 0) {
         projects.splice(idx, 1)
-        response.json(projects)
+        response.status(204).end()
     } else {
         response.status(404).end() 
     }
