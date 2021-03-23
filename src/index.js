@@ -1,5 +1,6 @@
 const express = require('express')
 const Sentry = require('@sentry/node')
+require('dotenv').config()
 const Tracing = require('@sentry/tracing')
 const cors = require('cors')
 const app = express()
@@ -114,7 +115,8 @@ app.use(Sentry.Handlers.errorHandler())
 app.use(handleErrors)
 app.use(notFound)
 
-const PORT = process.env.PORT
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 3001
+const server = app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`)
 })
+module.exports = { app, server }
