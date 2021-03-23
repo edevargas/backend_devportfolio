@@ -52,9 +52,7 @@ app.get('/api/projects/:id', (request, response, next) => {
     .then(result => {
       result ? response.json(result) : response.status(404).end()
     })
-    .catch(err => {
-      next(err)
-    })
+    .catch(next)
 })
 
 app.post('/api/projects', (request, response) => {
@@ -89,9 +87,7 @@ app.delete('/api/projects/:id', (request, response, next) => {
           error: `Project with id ${id} does not exists`
         })
     })
-    .catch(err => {
-      next(err)
-    })
+    .catch(next)
 })
 
 app.put('/api/projects/:id', (request, response, next) => {
@@ -109,9 +105,7 @@ app.put('/api/projects/:id', (request, response, next) => {
           error: `Project with id ${id} does not exists`
         })
     })
-    .catch(err => {
-      next(err)
-    })
+    .catch(next)
 })
 
 // The error handler must be before any other error middleware and after all controllers
