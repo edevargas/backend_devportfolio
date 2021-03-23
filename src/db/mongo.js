@@ -17,15 +17,7 @@ mongoose.connect(connectionString, {
     console.log('Database connection fail', err)
   })
 
-// const newProject = new Project({
-//   name: 'Project from mongoose',
-//   description: 'lorem',
-//   categories: ['design', 'mobile'],
-//   user: '111',
-//   url: 'http://google.com'
-// })
-// Project.find({})
-//   .then(result => {
-//     console.log(result)
-//     mongoose.connection.close()
-//   })
+process.on('uncaughtException', () => {
+  console.log('disconnected')
+  mongoose.connection.close()
+})
