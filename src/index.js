@@ -2,25 +2,38 @@ const express = require('express')
 const logger = require('./middlewares/loggerMiddleware')
 const cors = require('cors')
 const app = express()
+require('./db/mongo')
 
 app.use(cors())
 app.use(express.json())
 app.use(logger)
 
-const { projects } = require('./data')
+const Project = require('./models/Project')
+const notFound = require('./middlewares/notFound')
 
 app.get('/', (request, response) => {
   response.send('<h1>Hi from dev Portfolio v1.0.0</h1>')
 })
 
 app.get('/api/projects', (request, response) => {
-  response.json(projects)
+  Project.find({})
+    .then(result => {
+      response.json(result)
+    })
+    .catch(err => response.status(500).json({
+      error: err
+    }))
 })
 
-app.get('/api/projects/:id', (request, response) => {
+app.get('/api/projects/:id', (request, response, next) => {
   const { id } = request.params
-  const project = projects.find((p) => p._id === id)
-  project ? response.json(project) : response.status(404).end()
+  Project.findById(id)
+    .then(result => {
+      result ? response.json(result) : response.status(404).end()
+    })
+    .catch(err => {
+      next(err)
+    })
 })
 
 app.post('/api/projects', (request, response) => {
@@ -30,35 +43,67 @@ app.post('/api/projects', (request, response) => {
       error: 'Is not a valid project'
     })
   }
-  const randomId = Math.random().toString(36)
-  const newProject = {
+  const newProject = new Project({
     ...project,
-    _id: randomId,
     creationDate: new Date().toISOString()
-  }
-  const lastIndex = projects.length
-  projects.splice(lastIndex + 1, 0, newProject)
-  response.json(newProject)
-})
-
-app.delete('/api/projects/:id', (request, response) => {
-  const { id } = request.params
-  const idx = projects.findIndex((p) => p._id === id)
-  if (idx >= 0) {
-    projects.splice(idx, 1)
-    response.status(204).end()
-  } else {
-    response.status(404).end()
-  }
-})
-
-app.use((request, response, next) => {
-  response.status(404).json({
-    error: 'Not found'
   })
+  newProject.save()
+    .then(result => {
+      // mongoose.connection.close()
+      response.json(result)
+    })
+    .catch(err => response.status(500).json({
+      error: err
+    })
+    )
 })
 
-const PORT = process.env.PORT || 3001
+app.delete('/api/projects/:id', (request, response, next) => {
+  const { id } = request.params
+  Project.findByIdAndDelete(id)
+    .then(result => {
+      result
+        ? response.status(204).end()
+        : response.status(404).send({
+          error: `Project with id ${id} does not exists`
+        })
+    })
+    .catch(err => {
+      next(err)
+    })
+})
+
+app.put('/api/projects/:id', (request, response, next) => {
+  const { id } = request.params
+  const project = request.body
+  const projectEdited = {
+    ...project,
+    modificationDate: new Date().toISOString()
+  }
+  Project.findByIdAndUpdate(id, projectEdited, { new: true })
+    .then(result => {
+      result
+        ? response.json(result)
+        : response.status(404).send({
+          error: `Project with id ${id} does not exists`
+        })
+    })
+    .catch(err => {
+      next(err)
+    })
+})
+
+app.use((error, request, response, next) => {
+  console.error(error)
+  if (error.name === 'CastError') {
+    response.status(400).send({ error: 'Id malformed' })
+  } else {
+    response.status(500).json({ error: error })
+  }
+})
+app.use(notFound)
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`)
 })
