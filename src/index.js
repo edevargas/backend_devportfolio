@@ -10,6 +10,7 @@ app.use(logger)
 
 const Project = require('./models/Project')
 const notFound = require('./middlewares/notFound')
+const handleErrors = require('./middlewares/handleErrors')
 
 app.get('/', (request, response) => {
   response.send('<h1>Hi from dev Portfolio v1.0.0</h1>')
@@ -93,14 +94,7 @@ app.put('/api/projects/:id', (request, response, next) => {
     })
 })
 
-app.use((error, request, response, next) => {
-  console.error(error)
-  if (error.name === 'CastError') {
-    response.status(400).send({ error: 'Id malformed' })
-  } else {
-    response.status(500).json({ error: error })
-  }
-})
+app.use(handleErrors)
 app.use(notFound)
 
 const PORT = process.env.PORT
