@@ -1,16 +1,36 @@
 const express = require('express')
-const logger = require('./middlewares/loggerMiddleware')
+const Sentry = require('@sentry/node')
+const Tracing = require('@sentry/tracing')
 const cors = require('cors')
 const app = express()
-require('./db/mongo')
+Sentry.init({
+  dsn: 'https://7d89f2ebd0b14eb1aeed565b79b544fb@o556750.ingest.sentry.io/5688136',
+  integrations: [
+    // enable HTTP calls tracing
+    new Sentry.Integrations.Http({ tracing: true }),
+    // enable Express.js middleware tracing
+    new Tracing.Integrations.Express({ app })
+  ],
 
+  // Set tracesSampleRate to 1.0 to capture 100%
+  // of transactions for performance monitoring.
+  // We recommend adjusting this value in production
+  tracesSampleRate: 1.0
+})
+require('./db/mongo')
+const Project = require('./models/Project')
+const notFound = require('./middlewares/notFound')
+const handleErrors = require('./middlewares/handleErrors')
+const logger = require('./middlewares/loggerMiddleware')
 app.use(cors())
 app.use(express.json())
 app.use(logger)
 
-const Project = require('./models/Project')
-const notFound = require('./middlewares/notFound')
-const handleErrors = require('./middlewares/handleErrors')
+// RequestHandler creates a separate execution context using domains, so that every
+// transaction/span/breadcrumb is attached to its own Hub instance
+app.use(Sentry.Handlers.requestHandler())
+// TracingHandler creates a trace for every incoming request
+app.use(Sentry.Handlers.tracingHandler())
 
 app.get('/', (request, response) => {
   response.send('<h1>Hi from dev Portfolio v1.0.0</h1>')
@@ -93,6 +113,9 @@ app.put('/api/projects/:id', (request, response, next) => {
       next(err)
     })
 })
+
+// The error handler must be before any other error middleware and after all controllers
+app.use(Sentry.Handlers.errorHandler())
 
 app.use(handleErrors)
 app.use(notFound)
