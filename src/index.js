@@ -5,7 +5,7 @@ const Tracing = require('@sentry/tracing')
 const cors = require('cors')
 const app = express()
 Sentry.init({
-  dsn: 'https://7d89f2ebd0b14eb1aeed565b79b544fb@o556750.ingest.sentry.io/5688136',
+  dsn: process.env.SENTRY_DSN,
   integrations: [
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
