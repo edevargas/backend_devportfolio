@@ -1,13 +1,13 @@
-const { server } = require('../src/index.js')
+const { server } = require('@app')
 const mongoose = require('mongoose')
-const Project = require('../src/models/Project')
-const {
+const Project = require('@models/Project')
+import {
   api,
   initialProjects,
   getAllProjectNames,
   newProject,
   getFirstProject
-} = require('./helpers/projectsHelper')
+} from './helpers/projectsHelper'
 
 beforeEach(async () => {
   await Project.deleteMany({})

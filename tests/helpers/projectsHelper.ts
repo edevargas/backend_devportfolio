@@ -1,12 +1,14 @@
+import { IProject } from "@models/Project"
+
 const supertest = require('supertest')
-const { app } = require('../../src/index.js')
+const { app } = require('@app')
 
 const api = supertest(app)
 
 const getAllProjectNames = async () => {
   const response = await api.get('/api/projects')
   return {
-    names: response.body.map(p => p.name),
+    names: response.body.map((p: IProject )=> p.name),
     projects: response
   }
 }
@@ -51,7 +53,7 @@ const getFirstProject = async () => {
   return allProjects.body[0]
 }
 
-module.exports = {
+export {
   api,
   initialProjects,
   getAllProjectNames,

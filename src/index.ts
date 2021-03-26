@@ -1,23 +1,26 @@
-const express = require('express')
-const Sentry = require('@sentry/node')
+const express, { Request, Response } = require('express')
+import { Request, Response } from 'express'
+import Sentry from '@sentry/node'
 require('dotenv').config()
-const Tracing = require('@sentry/tracing')
+import Tracing from '@sentry/tracing'
 const cors = require('cors')
 const app = express()
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  integrations: [
-    // enable HTTP calls tracing
-    new Sentry.Integrations.Http({ tracing: true }),
-    // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app })
-  ],
+if(process.env.NODE_ENV != 'test') {
+  Sentry.init({  
+    dsn: process.env.SENTRY_DSN,
+    integrations: [
+      // enable HTTP calls tracing
+      new Sentry.Integrations.Http({ tracing: true }),
+      // enable Express.js middleware tracing
+      new Tracing.Integrations.Express({ app })
+    ],
 
-  // Set tracesSampleRate to 1.0 to capture 100%
-  // of transactions for performance monitoring.
-  // We recommend adjusting this value in production
-  tracesSampleRate: 1.0
-})
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: 1.0
+  })
+}
 require('./db/mongo')
 const Project = require('./models/Project')
 const notFound = require('./middlewares/notFound')
@@ -27,31 +30,33 @@ app.use(cors())
 app.use(express.json())
 app.use(logger)
 
+if(process.env.NODE_ENV != 'test') {
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance
 app.use(Sentry.Handlers.requestHandler())
 // TracingHandler creates a trace for every incoming request
 app.use(Sentry.Handlers.tracingHandler())
+}
 
-app.get('/', (request, response) => {
+app.get('/', (request: Request, response: Response) => {
   response.send('<h1>Hi from dev Portfolio v1.0.0</h1>')
 })
 
-app.get('/api/projects', async (request, response) => {
+app.get('/api/projects', async (request: Request, response: Response) => {
   const projects = await Project.find({})
   response.json(projects)
 })
 
-app.get('/api/projects/:id', (request, response, next) => {
+app.get('/api/projects/:id', (request: Request, response: Response, next) => {
   const { id } = request.params
   Project.findById(id)
-    .then(result => {
+    .then((result: any) => {
       result ? response.json(result) : response.status(404).end()
     })
     .catch(next)
 })
 
-app.post('/api/projects', async (request, response, next) => {
+app.post('/api/projects', async (request: Request, response: Response, next) => {
   const project = request.body
   if (!project || !project.name) {
     return response.status(400).json({
@@ -70,7 +75,7 @@ app.post('/api/projects', async (request, response, next) => {
   }
 })
 
-app.delete('/api/projects/:id', async (request, response, next) => {
+app.delete('/api/projects/:id', async (request: Request, response: Response, next) => {
   const { id } = request.params
   try {
     await Project.findByIdAndDelete(id)
@@ -80,7 +85,7 @@ app.delete('/api/projects/:id', async (request, response, next) => {
   }
 })
 
-app.put('/api/projects/:id', async (request, response, next) => {
+app.put('/api/projects/:id', async (request: Request, response: Response, next) => {
   const { id } = request.params
   const project = request.body
   if (Object.keys(project).length === 0 || !project) {
@@ -106,8 +111,10 @@ app.put('/api/projects/:id', async (request, response, next) => {
   }
 })
 
+if(process.env.NODE_ENV != 'test') {
 // The error handler must be before any other error middleware and after all controllers
 app.use(Sentry.Handlers.errorHandler())
+}
 
 app.use(handleErrors)
 app.use(notFound)

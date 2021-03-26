@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+import mongoose = require('mongoose')
 
 const { NODE_ENV, MONGO_DB_URI, MONGO_DB_URI_TEST } = process.env
 
@@ -6,19 +6,19 @@ let connectionString = ''
 
 switch (NODE_ENV) {
   case 'production':
-    connectionString = MONGO_DB_URI
+    connectionString = MONGO_DB_URI || ''
     break
   case 'development':
-    connectionString = MONGO_DB_URI
+    connectionString = MONGO_DB_URI || ''
     break
   case 'test':
-    connectionString = MONGO_DB_URI_TEST
+    connectionString = MONGO_DB_URI_TEST || ''
     break
 
   default:
     break
 }
-console.log(connectionString)
+console.log('::::::::::::::::::::::::::::::::::::connectionString',connectionString)
 mongoose.connect(connectionString, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -28,7 +28,7 @@ mongoose.connect(connectionString, {
   .then(() => {
     console.log('Database connected')
   })
-  .catch((err) => {
+  .catch((err: any) => {
     console.log('Database connection fail', err)
   })
 

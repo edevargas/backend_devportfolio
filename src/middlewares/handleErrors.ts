@@ -1,4 +1,5 @@
-module.exports = (error, request, response, next) => {
+import {Request, Response} from 'express'
+module.exports = (error: any, request: Request, response: Response, next: any) => {
   console.error(error)
   switch (error.name) {
     case 'CastError':
