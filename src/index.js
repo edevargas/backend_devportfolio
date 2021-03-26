@@ -37,14 +37,9 @@ app.get('/', (request, response) => {
   response.send('<h1>Hi from dev Portfolio v1.0.0</h1>')
 })
 
-app.get('/api/projects', (request, response) => {
-  Project.find({})
-    .then(result => {
-      response.json(result)
-    })
-    .catch(err => response.status(500).json({
-      error: err
-    }))
+app.get('/api/projects', async (request, response) => {
+  const projects = await Project.find({})
+  response.json(projects)
 })
 
 app.get('/api/projects/:id', (request, response, next) => {
@@ -56,7 +51,7 @@ app.get('/api/projects/:id', (request, response, next) => {
     .catch(next)
 })
 
-app.post('/api/projects', (request, response) => {
+app.post('/api/projects', async (request, response, next) => {
   const project = request.body
   if (!project || !project.name) {
     return response.status(400).json({
@@ -67,46 +62,48 @@ app.post('/api/projects', (request, response) => {
     ...project,
     creationDate: new Date().toISOString()
   })
-  newProject.save()
-    .then(result => {
-      // mongoose.connection.close()
-      response.json(result)
-    })
-    .catch(err => response.status(500).json({
-      error: err
-    })
-    )
+  try {
+    const savedProject = await newProject.save()
+    response.json(savedProject)
+  } catch (error) {
+    next(error)
+  }
 })
 
-app.delete('/api/projects/:id', (request, response, next) => {
+app.delete('/api/projects/:id', async (request, response, next) => {
   const { id } = request.params
-  Project.findByIdAndDelete(id)
-    .then(result => {
-      result
-        ? response.status(204).end()
-        : response.status(404).send({
-          error: `Project with id ${id} does not exists`
-        })
-    })
-    .catch(next)
+  try {
+    await Project.findByIdAndDelete(id)
+    response.status(204).end()
+  } catch (error) {
+    next(error)
+  }
 })
 
-app.put('/api/projects/:id', (request, response, next) => {
+app.put('/api/projects/:id', async (request, response, next) => {
   const { id } = request.params
   const project = request.body
+  if (Object.keys(project).length === 0 || !project) {
+    response.status(400).send({
+      error: 'Project can not be an empty object'
+    })
+  }
+
   const projectEdited = {
     ...project,
     modificationDate: new Date().toISOString()
   }
-  Project.findByIdAndUpdate(id, projectEdited, { new: true })
-    .then(result => {
-      result
-        ? response.json(result)
-        : response.status(404).send({
-          error: `Project with id ${id} does not exists`
-        })
-    })
-    .catch(next)
+  try {
+    const result = await Project.findByIdAndUpdate(id, projectEdited, { new: true })
+    result
+      ? response.json(result)
+      : next({
+        name: 'NotFound',
+        error: `Project with id ${id} does not exists`
+      })
+  } catch (error) {
+    next(error)
+  }
 })
 
 // The error handler must be before any other error middleware and after all controllers
