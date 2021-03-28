@@ -5,20 +5,20 @@ const { NODE_ENV, MONGO_DB_URI, MONGO_DB_URI_TEST } = process.env
 let connectionString = ''
 
 switch (NODE_ENV) {
-  case 'production':
-    connectionString = MONGO_DB_URI || ''
-    break
-  case 'development':
-    connectionString = MONGO_DB_URI || ''
-    break
-  case 'test':
-    connectionString = MONGO_DB_URI_TEST || ''
-    break
+case 'production':
+  connectionString = MONGO_DB_URI || ''
+  break
+case 'development':
+  connectionString = MONGO_DB_URI || ''
+  break
+case 'test':
+  connectionString = MONGO_DB_URI_TEST || ''
+  break
 
-  default:
-    break
+default:
+  break
 }
-console.log('::::::::::::::::::::::::::::::::::::connectionString',connectionString)
+
 mongoose.connect(connectionString, {
   useNewUrlParser: true,
   useUnifiedTopology: true,

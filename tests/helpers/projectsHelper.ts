@@ -1,4 +1,4 @@
-import { IProject } from "@models/Project"
+const { IProject } = require('@models/Project')
 
 const supertest = require('supertest')
 const { app } = require('@app')
@@ -8,7 +8,7 @@ const api = supertest(app)
 const getAllProjectNames = async () => {
   const response = await api.get('/api/projects')
   return {
-    names: response.body.map((p: IProject )=> p.name),
+    names: response.body.map((p: any )=> p.name),
     projects: response
   }
 }
@@ -45,7 +45,7 @@ const newProject = {
   description: 'lorem 2',
   user: '222',
   url: 'http://google.com',
-  creationDate: new Date().toISOString
+  creationDate: new Date().toISOString()
 }
 
 const getFirstProject = async () => {

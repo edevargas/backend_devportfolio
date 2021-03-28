@@ -1,8 +1,8 @@
-const express, { Request, Response } = require('express')
-import { Request, Response } from 'express'
-import Sentry from '@sentry/node'
+const express = require('express')
+import { Request, Response, NextFunction } from 'express'
+const Sentry = require('@sentry/node')
 require('dotenv').config()
-import Tracing from '@sentry/tracing'
+const Tracing = require('@sentry/tracing')
 const cors = require('cors')
 const app = express()
 if(process.env.NODE_ENV != 'test') {
@@ -22,7 +22,7 @@ if(process.env.NODE_ENV != 'test') {
   })
 }
 require('./db/mongo')
-const Project = require('./models/Project')
+const { Project } = require('./models/Project')
 const notFound = require('./middlewares/notFound')
 const handleErrors = require('./middlewares/handleErrors')
 const logger = require('./middlewares/loggerMiddleware')
@@ -33,9 +33,9 @@ app.use(logger)
 if(process.env.NODE_ENV != 'test') {
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance
-app.use(Sentry.Handlers.requestHandler())
-// TracingHandler creates a trace for every incoming request
-app.use(Sentry.Handlers.tracingHandler())
+  app.use(Sentry.Handlers.requestHandler())
+  // TracingHandler creates a trace for every incoming request
+  app.use(Sentry.Handlers.tracingHandler())
 }
 
 app.get('/', (request: Request, response: Response) => {
@@ -47,7 +47,7 @@ app.get('/api/projects', async (request: Request, response: Response) => {
   response.json(projects)
 })
 
-app.get('/api/projects/:id', (request: Request, response: Response, next) => {
+app.get('/api/projects/:id', (request: Request, response: Response, next: NextFunction ) => {
   const { id } = request.params
   Project.findById(id)
     .then((result: any) => {
@@ -56,7 +56,7 @@ app.get('/api/projects/:id', (request: Request, response: Response, next) => {
     .catch(next)
 })
 
-app.post('/api/projects', async (request: Request, response: Response, next) => {
+app.post('/api/projects', async (request: Request, response: Response, next: NextFunction ) => {
   const project = request.body
   if (!project || !project.name) {
     return response.status(400).json({
@@ -75,7 +75,7 @@ app.post('/api/projects', async (request: Request, response: Response, next) => 
   }
 })
 
-app.delete('/api/projects/:id', async (request: Request, response: Response, next) => {
+app.delete('/api/projects/:id', async (request: Request, response: Response, next: NextFunction ) => {
   const { id } = request.params
   try {
     await Project.findByIdAndDelete(id)
@@ -85,7 +85,7 @@ app.delete('/api/projects/:id', async (request: Request, response: Response, nex
   }
 })
 
-app.put('/api/projects/:id', async (request: Request, response: Response, next) => {
+app.put('/api/projects/:id', async (request: Request, response: Response, next: NextFunction ) => {
   const { id } = request.params
   const project = request.body
   if (Object.keys(project).length === 0 || !project) {
@@ -113,7 +113,7 @@ app.put('/api/projects/:id', async (request: Request, response: Response, next) 
 
 if(process.env.NODE_ENV != 'test') {
 // The error handler must be before any other error middleware and after all controllers
-app.use(Sentry.Handlers.errorHandler())
+  app.use(Sentry.Handlers.errorHandler())
 }
 
 app.use(handleErrors)

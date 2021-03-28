@@ -1,6 +1,6 @@
 const { server } = require('@app')
 const mongoose = require('mongoose')
-const Project = require('@models/Project')
+const { Project } = require('@models/Project')
 import {
   api,
   initialProjects,
@@ -10,7 +10,7 @@ import {
 } from './helpers/projectsHelper'
 
 beforeEach(async () => {
-  await Project.deleteMany({})
+  await Project.deleteMany({}).exec()
   await Project.insertMany(initialProjects)
 })
 describe('Projects', () => {

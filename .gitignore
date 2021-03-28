@@ -38,6 +38,7 @@ Thumbs.db
 /dist
 /tmp
 /out-tsc
+/build
 
 # profiling files
 chrome-profiler-events*.json
